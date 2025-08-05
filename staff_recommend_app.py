@@ -20,13 +20,10 @@ init_session()
 
 st.title("and st統計記録")
 
-# 選擇紀錄類型
 tab1, tab2 = st.tabs(["APP推薦紀錄", "アンケート紀錄"])
-
 
 def get_week_str(input_date):
     return f"{input_date.isocalendar().week}w"
-
 
 def record_form(label, category):
     st.subheader(label)
@@ -35,9 +32,10 @@ def record_form(label, category):
         with col1:
             selected_date = st.date_input("日付", value=date.today(), key=f"{category}_date")
         with col2:
-            name = st.selectbox("名前", options=sorted(st.session_state.names),
-                                index=0 if st.session_state.names else None,
-                                key=f"{category}_name_select")
+            if st.session_state.names:
+                name = st.selectbox("名前を選択", options=sorted(st.session_state.names), key=f"{category}_name_select")
+            else:
+                name = ""
             name_input = st.text_input("新しい名前を入力", key=f"{category}_name_input")
 
         if name_input:
@@ -64,7 +62,6 @@ def record_form(label, category):
             else:
                 record.update({"アンケート": survey})
 
-            # 檢查是否已存在同一天同人員同類型 → 更新
             updated = False
             for r in st.session_state.data:
                 if r["date"] == selected_date and r["name"] == name and r["type"] == category:
@@ -75,7 +72,6 @@ def record_form(label, category):
                 st.session_state.data.append(record)
 
             st.success("保存しました")
-
 
 with tab1:
     record_form("APP推薦紀錄", "app")
@@ -88,9 +84,6 @@ with tab2:
     st.divider()
     st.subheader("アンケート月目標設定")
     st.session_state.survey_target = st.number_input("アンケート 月目標件数", 0, 1000, st.session_state.survey_target)
-
-
-# ======================== 統計區塊 ==========================
 
 def show_statistics(category, label):
     st.header(f"{label} 統計")
@@ -105,7 +98,6 @@ def show_statistics(category, label):
     current_month = date.today().strftime("%Y-%m")
     df = df[df["month"] == current_month]
 
-    # 1. 月總數與達成率
     if category == "app":
         total = df[["新規", "既存", "LINE"]].sum().sum()
         target = st.session_state.app_target
@@ -117,14 +109,25 @@ def show_statistics(category, label):
     if target:
         st.metric("達成率", f"{(total / target * 100):.1f}%")
 
-    # 2. 每週統計
     st.subheader("週別件数")
     week_data = df.groupby("week").sum(numeric_only=True)
     st.bar_chart(week_data)
 
-    # 3.
+    st.subheader("スタッフ別合計")
+    staff_data = df.groupby("name").sum(numeric_only=True)
+    st.bar_chart(staff_data)
 
+    if category == "app":
+        st.subheader("構成比 (App vs LINE)")
+        app_total = df[["新規", "既存"]].sum().sum()
+        line_total = df["LINE"].sum()
+        if app_total + line_total > 0:
+            plt.figure()
+            plt.pie([app_total, line_total], labels=["App", "LINE"], autopct="%1.1f%%", startangle=90)
+            st.pyplot(plt.gcf())
 
+show_statistics("app", "APP")
+show_statistics("survey", "アンケート")
 
 
 
