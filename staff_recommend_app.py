@@ -1,27 +1,15 @@
-import gspread
+import streamlit as st  # 確保已經正確導入 streamlit
+import pandas as pd
+from datetime import datetime, date
+import calendar
+import matplotlib.pyplot as plt
+from collections import defaultdict
+import json
+import os
 from oauth2client.service_account import ServiceAccountCredentials
+import gspread
 
-# 設置 Google Sheets 連接
-def connect_to_sheets():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name('your_service_account.json', scope)
-    client = gspread.authorize(creds)
-    return client
-
-# 從 Google Sheets 讀取資料
-def read_data_from_sheets():
-    client = connect_to_sheets()
-    sheet = client.open('your_spreadsheet_name').sheet1  # 請替換為您自己的 Spreadsheet 名稱
-    records = sheet.get_all_records()  # 讀取所有記錄
-    return records
-
-# 將資料寫入 Google Sheets
-def write_data_to_sheets(data):
-    client = connect_to_sheets()
-    sheet = client.open('your_spreadsheet_name').sheet1
-    sheet.append_row(data)  # 每次追加一行資料
-
-import # 初始化 session state 並從 Google Sheets 讀取資料
+# 初始化 session state 並從 Google Sheets 讀取資料
 def init_session():
     if "data" not in st.session_state:
         st.session_state.data = read_data_from_sheets()  # 讀取資料
@@ -32,27 +20,31 @@ def init_session():
     if "survey_target" not in st.session_state:
         st.session_state.survey_target = 0
 
-init_session()
- as st
-import pandas as pd
-from datetime import datetime, date
-import calendar
-import matplotlib.pyplot as plt
-from collections import defaultdict
+# 從 Google Sheets 讀取資料
+def read_data_from_sheets():
+    # 從環境變數中讀取 Google Sheets 憑證
+    credentials_json = os.getenv('GOOGLE_SHEET_CREDENTIALS')
+    if not credentials_json:
+        raise ValueError("未找到 Google Sheets 憑證環境變數")
+
+    # 解析憑證
+    creds_dict = json.loads(credentials_json)
+
+    # 使用憑證連接 Google Sheets
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+    client = gspread.authorize(creds)
+
+    # 打開指定的 Google Sheets 文件
+    spreadsheet = client.open("and_st_recommend")
+    sheet = spreadsheet.sheet1  # 假設資料在第一個工作表
+    data = sheet.get_all_records()  # 讀取所有記錄
+    return data
 
 # 初始化 session state
-def init_session():
-    if "data" not in st.session_state:
-        st.session_state.data = []
-    if "names" not in st.session_state:
-        st.session_state.names = set()
-    if "app_target" not in st.session_state:
-        st.session_state.app_target = 0
-    if "survey_target" not in st.session_state:
-        st.session_state.survey_target = 0
-
 init_session()
 
+# 以下為您原本的程式碼部分，保持不變
 st.title("and st統計記録")
 
 tab1, tab2 = st.tabs(["APP推薦紀錄", "アンケート紀錄"])
@@ -86,24 +78,27 @@ def record_form(label, category):
 
         submitted = st.form_submit_button("保存")
         if submitted:
-    record = {
-        "date": selected_date,
-        "week": get_week_str(selected_date),
-        "name": name,
-        "type": category,
-    }
-    if category == "app":
-        record.update({"新規": new, "既存": exist, "LINE": line})
-    else:
-        record.update({"アンケート": survey})
+            record = {
+                "date": selected_date,
+                "week": get_week_str(selected_date),
+                "name": name,
+                "type": category,
+            }
+            if category == "app":
+                record.update({"新規": new, "既存": exist, "LINE": line})
+            else:
+                record.update({"アンケート": survey})
 
-    # 新增資料到 session_state.data
-    st.session_state.data.append(record)
+            updated = False
+            for r in st.session_state.data:
+                if r["date"] == selected_date and r["name"] == name and r["type"] == category:
+                    r.update(record)
+                    updated = True
+                    break
+            if not updated:
+                st.session_state.data.append(record)
 
-    # 將資料寫入 Google Sheets
-    write_data_to_sheets(list(record.values()))  # 傳遞資料到 Google Sheets
-
-    st.success("保存しました")
+            st.success("保存しました")
 
 
 with tab1:
@@ -161,6 +156,5 @@ def show_statistics(category, label):
 
 show_statistics("app", "APP")
 show_statistics("survey", "アンケート")
-
 
 
