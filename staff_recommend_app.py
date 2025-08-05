@@ -1,3 +1,4 @@
+import sheet_db as db
 import streamlit as st
 import pandas as pd
 from datetime import datetime, date
@@ -18,7 +19,7 @@ def init_session():
 
 init_session()
 
-st.title("店舖推薦紀錄アプリ")
+st.title("and st統計記録")
 
 # 選擇紀錄類型
 tab1, tab2 = st.tabs(["APP推薦紀錄", "アンケート紀錄"])
@@ -72,9 +73,14 @@ def record_form(label, category):
                     updated = True
                     break
             if not updated:
-                st.session_state.data.append(record)
+    st.session_state.data.append(record)
 
-            st.success("保存しました")
+# 如果是 app 類型，寫入 Google Sheets
+if category == "app":
+    db.upsert_row(selected_date, new, exist, line)
+
+st.success("保存しました")
+
 
 
 with tab1:
