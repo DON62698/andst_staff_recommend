@@ -20,10 +20,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install gspread oauth2client  # 安裝必要的庫
+        pip install -r requirements.txt  # 安裝 requirements.txt 中列出的所有依賴
 
     - name: Run script
       env:
         GOOGLE_SHEET_CREDENTIALS: ${{ secrets.GOOGLE_SHEET_CREDENTIALS }}  # 讀取 GitHub Secrets 中的憑證
       run: |
-        python staff_recommend_app.py  # 替換為您的 Python 程式名稱
+        python staff_recommend_app.py  # 執行您的 Python 程式
+
