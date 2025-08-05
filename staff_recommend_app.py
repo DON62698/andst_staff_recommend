@@ -51,7 +51,7 @@ def record_form(label, category):
         else:
             survey = st.number_input("アンケート件数", 0, 100, 0, key=f"{category}_survey")
 
-        submitted = st.form_submit_button("保存")
+                submitted = st.form_submit_button("保存")
         if submitted:
             record = {
                 "date": selected_date,
@@ -65,15 +65,16 @@ def record_form(label, category):
                 record.update({"アンケート": survey})
 
             # 檢查是否已存在同一天同人員同類型 → 更新
-updated = False
-for r in st.session_state.data:
-    if r["date"] == selected_date and r["name"] == name and r["type"] == category:
-        r.update(record)
-        updated = True
-        break
-if not updated:
-    st.session_state.data.append(record)
+            updated = False
+            for r in st.session_state.data:
+                if r["date"] == selected_date and r["name"] == name and r["type"] == category:
+                    r.update(record)
+                    updated = True
+                    break
+            if not updated:
+                st.session_state.data.append(record)
 
+            # 檢查是否已存在同一天同人員同類型 → 更新
     st.subheader("APP月目標設定")
     st.session_state.app_target = st.number_input("APP 月目標件数", 0, 1000, st.session_state.app_target)
 
