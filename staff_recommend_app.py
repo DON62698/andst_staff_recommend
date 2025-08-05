@@ -66,26 +66,15 @@ def record_form(label, category):
                 record.update({"アンケート": survey})
 
             # 檢查是否已存在同一天同人員同類型 → 更新
-            updated = False
-            for r in st.session_state.data:
-                if r["date"] == selected_date and r["name"] == name and r["type"] == category:
-                    r.update(record)
-                    updated = True
-                    break
-            if not updated:
+updated = False
+for r in st.session_state.data:
+    if r["date"] == selected_date and r["name"] == name and r["type"] == category:
+        r.update(record)
+        updated = True
+        break
+if not updated:
     st.session_state.data.append(record)
 
-# 如果是 app 類型，寫入 Google Sheets
-if category == "app":
-    db.upsert_row(selected_date, new, exist, line)
-
-st.success("保存しました")
-
-
-
-with tab1:
-    record_form("APP推薦紀錄", "app")
-    st.divider()
     st.subheader("APP月目標設定")
     st.session_state.app_target = st.number_input("APP 月目標件数", 0, 1000, st.session_state.app_target)
 
