@@ -51,7 +51,7 @@ def record_form(label, category):
         else:
             survey = st.number_input("アンケート件数", 0, 100, 0, key=f"{category}_survey")
 
-                submitted = st.form_submit_button("保存")
+        submitted = st.form_submit_button("保存")
         if submitted:
             record = {
                 "date": selected_date,
@@ -74,7 +74,12 @@ def record_form(label, category):
             if not updated:
                 st.session_state.data.append(record)
 
-            # 檢查是否已存在同一天同人員同類型 → 更新
+            st.success("保存しました")
+
+
+with tab1:
+    record_form("APP推薦紀錄", "app")
+    st.divider()
     st.subheader("APP月目標設定")
     st.session_state.app_target = st.number_input("APP 月目標件数", 0, 1000, st.session_state.app_target)
 
@@ -117,20 +122,9 @@ def show_statistics(category, label):
     week_data = df.groupby("week").sum(numeric_only=True)
     st.bar_chart(week_data)
 
-    # 3. 員工別統計
-    st.subheader("スタッフ別合計")
-    staff_data = df.groupby("name").sum(numeric_only=True)
-    st.bar_chart(staff_data)
-
-    # 4. 構成比
-    if category == "app":
-        st.subheader("構成比 (App vs LINE)")
-        app_total = df[["新規", "既存"]].sum().sum()
-        line_total = df["LINE"].sum()
-        plt.figure()
-        plt.pie([app_total, line_total], labels=["App", "LINE"], autopct="%1.1f%%", startangle=90)
-        st.pyplot(plt.gcf())
+    # 3.
 
 
-show_statistics("app", "APP")
-show_statistics("survey", "アンケート")
+
+
+
