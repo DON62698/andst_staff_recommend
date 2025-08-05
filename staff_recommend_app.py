@@ -1,50 +1,23 @@
-import streamlit as st  # 確保已經正確導入 streamlit
+import streamlit as st
 import pandas as pd
 from datetime import datetime, date
 import calendar
 import matplotlib.pyplot as plt
 from collections import defaultdict
-import json
-import os
-from oauth2client.service_account import ServiceAccountCredentials
-import gspread
 
-# 初始化 session state 並從 Google Sheets 讀取資料
+# 初始化 session state
 def init_session():
     if "data" not in st.session_state:
-        st.session_state.data = read_data_from_sheets()  # 讀取資料
+        st.session_state.data = []
     if "names" not in st.session_state:
-        st.session_state.names = set([r["name"] for r in st.session_state.data])  # 提取員工名字
+        st.session_state.names = set()
     if "app_target" not in st.session_state:
         st.session_state.app_target = 0
     if "survey_target" not in st.session_state:
         st.session_state.survey_target = 0
 
-# 從 Google Sheets 讀取資料
-def read_data_from_sheets():
-    # 從環境變數中讀取 Google Sheets 憑證
-    credentials_json = os.getenv('GOOGLE_SHEET_CREDENTIALS')
-    if not credentials_json:
-        raise ValueError("未找到 Google Sheets 憑證環境變數")
-
-    # 解析憑證
-    creds_dict = json.loads(credentials_json)
-
-    # 使用憑證連接 Google Sheets
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    client = gspread.authorize(creds)
-
-    # 打開指定的 Google Sheets 文件
-    spreadsheet = client.open("and_st_recommend")
-    sheet = spreadsheet.sheet1  # 假設資料在第一個工作表
-    data = sheet.get_all_records()  # 讀取所有記錄
-    return data
-
-# 初始化 session state
 init_session()
 
-# 以下為您原本的程式碼部分，保持不變
 st.title("and st統計記録")
 
 tab1, tab2 = st.tabs(["APP推薦紀錄", "アンケート紀錄"])
@@ -99,7 +72,6 @@ def record_form(label, category):
                 st.session_state.data.append(record)
 
             st.success("保存しました")
-
 
 with tab1:
     record_form("APP推薦紀錄", "app")
@@ -156,5 +128,7 @@ def show_statistics(category, label):
 
 show_statistics("app", "APP")
 show_statistics("survey", "アンケート")
+
+
 
 
