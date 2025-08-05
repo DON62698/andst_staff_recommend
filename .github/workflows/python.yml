@@ -26,4 +26,4 @@ jobs:
       env:
         GOOGLE_SHEET_CREDENTIALS: ${{ secrets.GOOGLE_SHEET_CREDENTIALS }}  # 讀取 GitHub Secrets 中的憑證
       run: |
-        python your_script.py  # 替換為您的 Python 程式名稱
+        python staff_recommend_app.py  # 替換為您的 Python 程式名稱
