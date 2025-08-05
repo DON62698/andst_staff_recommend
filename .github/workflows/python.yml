@@ -1,1 +1,29 @@
+name: Run Google Sheets Script
 
+on:
+  push:
+    branches:
+      - main  # 當有更新推送到 main 分支時觸發
+
+jobs:
+  run_script:
+    runs-on: ubuntu-latest  # 使用 GitHub 提供的 Ubuntu 環境
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2  # 檢出代碼
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'  # 設定使用的 Python 版本
+
+    - name: Install dependencies
+      run: |
+        pip install gspread oauth2client  # 安裝必要的庫
+
+    - name: Run script
+      env:
+        GOOGLE_SHEET_CREDENTIALS: ${{ secrets.GOOGLE_SHEET_CREDENTIALS }}  # 讀取 GitHub Secrets 中的憑證
+      run: |
+        python your_script.py  # 替換為您的 Python 程式名稱
