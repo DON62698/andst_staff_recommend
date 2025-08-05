@@ -1,4 +1,39 @@
-import streamlit as st
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+# 設置 Google Sheets 連接
+def connect_to_sheets():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name('your_service_account.json', scope)
+    client = gspread.authorize(creds)
+    return client
+
+# 從 Google Sheets 讀取資料
+def read_data_from_sheets():
+    client = connect_to_sheets()
+    sheet = client.open('your_spreadsheet_name').sheet1  # 請替換為您自己的 Spreadsheet 名稱
+    records = sheet.get_all_records()  # 讀取所有記錄
+    return records
+
+# 將資料寫入 Google Sheets
+def write_data_to_sheets(data):
+    client = connect_to_sheets()
+    sheet = client.open('your_spreadsheet_name').sheet1
+    sheet.append_row(data)  # 每次追加一行資料
+
+import # 初始化 session state 並從 Google Sheets 讀取資料
+def init_session():
+    if "data" not in st.session_state:
+        st.session_state.data = read_data_from_sheets()  # 讀取資料
+    if "names" not in st.session_state:
+        st.session_state.names = set([r["name"] for r in st.session_state.data])  # 提取員工名字
+    if "app_target" not in st.session_state:
+        st.session_state.app_target = 0
+    if "survey_target" not in st.session_state:
+        st.session_state.survey_target = 0
+
+init_session()
+ as st
 import pandas as pd
 from datetime import datetime, date
 import calendar
@@ -51,27 +86,25 @@ def record_form(label, category):
 
         submitted = st.form_submit_button("保存")
         if submitted:
-            record = {
-                "date": selected_date,
-                "week": get_week_str(selected_date),
-                "name": name,
-                "type": category,
-            }
-            if category == "app":
-                record.update({"新規": new, "既存": exist, "LINE": line})
-            else:
-                record.update({"アンケート": survey})
+    record = {
+        "date": selected_date,
+        "week": get_week_str(selected_date),
+        "name": name,
+        "type": category,
+    }
+    if category == "app":
+        record.update({"新規": new, "既存": exist, "LINE": line})
+    else:
+        record.update({"アンケート": survey})
 
-            updated = False
-            for r in st.session_state.data:
-                if r["date"] == selected_date and r["name"] == name and r["type"] == category:
-                    r.update(record)
-                    updated = True
-                    break
-            if not updated:
-                st.session_state.data.append(record)
+    # 新增資料到 session_state.data
+    st.session_state.data.append(record)
 
-            st.success("保存しました")
+    # 將資料寫入 Google Sheets
+    write_data_to_sheets(list(record.values()))  # 傳遞資料到 Google Sheets
+
+    st.success("保存しました")
+
 
 with tab1:
     record_form("APP推薦紀錄", "app")
