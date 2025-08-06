@@ -4,10 +4,29 @@ from datetime import datetime, date
 import calendar
 import matplotlib.pyplot as plt
 from collections import defaultdict
-import json
 import os
+import json
 from oauth2client.service_account import ServiceAccountCredentials
 import gspread
+
+# 從環境變數讀取憑證
+credentials_json = os.getenv('GOOGLE_SHEET_CREDENTIALS')
+if not credentials_json:
+    raise ValueError("未找到 Google Sheets 憑證環境變數")
+
+# 解析憑證
+creds_dict = json.loads(credentials_json)
+
+# 使用憑證連接 Google Sheets
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+client = gspread.authorize(creds)
+
+# 打開 Google Sheets
+spreadsheet = client.open("and_st_recommend")
+sheet = spreadsheet.sheet1  # 假設資料在第一個工作表
+data = sheet.get_all_records()  # 讀取所有記錄
+
 
 # 初始化 session state 並從 Google Sheets 讀取資料
 def init_session():
